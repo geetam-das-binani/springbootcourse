@@ -3,10 +3,11 @@ package springbootlearn.springbootlearn.services;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
-// import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,16 @@ import springbootlearn.springbootlearn.repository.UserRepository;
 @Slf4j
 public class UserServices {
 
-   
     // private static final Logger logger =
     // LoggerFactory.getLogger(UserServices.class);
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+ 
 
     private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -32,12 +37,14 @@ public class UserServices {
         try {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setRoles(Arrays.asList("USER"));
+           
 
             User entry = userRepository.save(user);
 
             return entry;
         } catch (Exception e) {
-             //* if we use @Slf4j annotation then we have to use log and  no need to create logger instance */
+            // * if we use @Slf4j annotation then we have to use log and no need to create
+            // logger instance */
             log.trace("Error occured for {} :", user.getUserName());
             log.debug("Error occured for {} :", user.getUserName());
             log.warn("Error occured for {} :", user.getUserName());
@@ -104,13 +111,40 @@ public class UserServices {
             oldUser.setPassword(
                     newUser.getPassword() == null || newUser.getPassword().equals("") ? oldUser.getPassword()
                             : passwordEncoder.encode(newUser.getPassword()));
-
+oldUser.setSentimentAnalysis(true);
             userRepository.save(oldUser);
             return true;
         }
 
         return false;
 
+    }
+
+    public List<User> getUserForSentimentAnalysis() {
+        try {
+            Query query = new Query();
+            // query.addCriteria(Criteria.where("userName").is("harry"));
+            // query.addCriteria(Criteria.where("email").exists(true));
+            // query.addCriteria(Criteria.where("sentimentAnalysis").exists(true));
+
+        //     Criteria criteria = new Criteria();
+        // query.addCriteria (
+        //          criteria.andOperator
+        //         (
+        // Criteria.where("email").exists(true),
+        // Criteria.where("email").ne(null).ne(""),
+        // Criteria.where("email").regex("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"),
+        //  Criteria.where("sentimentAnalysis").is(true)));
+
+        query.addCriteria(Criteria.where("email").regex("^[\\w\\-\\.]+@([\\w\\-]+\\.)+[\\w\\-]{2,4}$"));
+         query.addCriteria(Criteria.where("sentimentAnalysis").is(true));
+        //  query.addCriteria(Criteria.where("roles").in("USER","ADMIN"));
+        //  query.addCriteria(Criteria.where("sentimentAnalysis").type(JsonSchemaObject.Type.BsonType.BOOLEAN));
+        
+            return mongoTemplate.find(query, User.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
 }

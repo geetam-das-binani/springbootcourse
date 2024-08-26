@@ -8,8 +8,11 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.mongodb.lang.NonNull;
 
 import lombok.*;
+
+
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,7 +30,12 @@ public class User {
     private String password;
 
     private List<String> roles;
+
+    private String email;
     
+    private boolean sentimentAnalysis; 
+    
+
     @DBRef
     private List<JournalEntry> journalEntries = new ArrayList<>();
 }
